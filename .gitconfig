@@ -1,0 +1,8 @@
+[user]
+	email = marskeymill@icloud.com
+	name = Marskey
+[alias]
+	unstage = reset HEAD --
+	last = log -1 HEAD
+[credential]
+	helper = cache
