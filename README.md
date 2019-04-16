@@ -1,4 +1,4 @@
-# 配置Linux Shell的基础
+# 自动配置Linux Shell的基础环境
 ## windows 
  先安装cygwin64, 右键点击以管理员身份运行.  cd到install_win.sh所在的目录.运行
  ```sh

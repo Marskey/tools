@@ -1,9 +1,6 @@
-cp win.zshrc ~/.zshrc
+bash install.sh
+
+# For windows
+# add right click option for windows
+chere -i -f -t mintty -s zsh
 cp .minttyrc ~/.
-cp .gitconfig ~/.
-wait
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-wait
-git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-wait
-chere -i -t mintty -s zsh
