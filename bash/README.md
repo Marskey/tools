@@ -1,9 +1,8 @@
-# 自动配置Linux 基础环境
+# auto install the macOS or linux base enviroment
 ## requirement
 git
 
-## Linux or MacOs 
- cd到install.sh所在的目录.运行
+## Installation
  ```sh
-    bash　install.sh
+    /bin/bash -c "$(https://raw.githubusercontent.com/Marskey/tools/master/bash/install.sh)"
  ```
