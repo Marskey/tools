@@ -5,5 +5,5 @@
 * curl
 ## Installation
 ```sh
-/bin/bash -c "$(https://raw.githubusercontent.com/Marskey/tools/master/bash/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Marskey/tools/master/bash/install.sh)"
 ```
