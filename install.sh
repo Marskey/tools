@@ -1,7 +1,7 @@
 #!/bin/bash
 git init --bare $HOME/.dotfiles
 wait
-dotfiles="/usr/bin/git --git-dir=${HOME}/.dotfiles/ --work-tree=${HOME}"
+dotfiles="/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME"
 $dotfiles remote add origin https://github.com/Marskey/dotfiles.git
 wait
 $dotfiles fetch
