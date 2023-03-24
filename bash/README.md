@@ -4,6 +4,6 @@
 * git
 * curl
 ## Installation
- ```sh
-    /bin/bash -c "$(https://raw.githubusercontent.com/Marskey/tools/master/bash/install.sh)"
- ```
+```sh
+/bin/bash -c "$(https://raw.githubusercontent.com/Marskey/tools/master/bash/install.sh)"
+```
