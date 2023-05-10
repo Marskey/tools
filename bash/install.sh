@@ -28,6 +28,20 @@ if [[ $OSTYPE == 'darwin'* ]]; then
   wait
   brew install tmux
   wait
+  brew install diff-so-fancy
+  wait
+  brew install rlwrap
+  wait
+  brew install ripgrep
+  wait
+  brew install lazygit
+  wait
+  brew isntall fzf
+  wait
+  brew install python3
+  wait
+  python3 -m pip install neovim-remote
+  wait
 elif [[ $OSTYPE == 'linux'* ]]; then
   echo 'linux'
   echo 'install nvim by youself'
