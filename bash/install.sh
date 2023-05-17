@@ -20,6 +20,8 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:
 wait 
 if [[ $OSTYPE == 'darwin'* ]]; then
   echo 'macOS'
+  xcode-select –install
+  wait
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   wait
   brew install --cask iterm2
