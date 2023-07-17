@@ -12,6 +12,9 @@ $dotfiles submodule init
 wait
 $dotfiles submodule update
 wait
+# Change git setup to only show tracked Files
+$dotfiles config --local status.showUntrackedFiles no
+wait
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh  | sed 's/env\ zsh\ -l//')"
 wait
 git clone https://github.com/zsh-users/zsh-autosuggestions $HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions
