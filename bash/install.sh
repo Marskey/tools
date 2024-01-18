@@ -29,8 +29,6 @@ if [[ $OSTYPE == 'darwin'* ]]; then
   wait
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   wait
-  brew install --cask iterm2
-  wait
   brew install nvim
   wait
   brew install tmux
