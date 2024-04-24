@@ -33,7 +33,7 @@ if [[ $OSTYPE == 'darwin'* ]]; then
   wait
   brew install tmux
   wait
-  brew install diff-so-fancy
+  brew install delta
   wait
   brew install rlwrap
   wait
