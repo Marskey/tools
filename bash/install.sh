@@ -59,6 +59,8 @@ brew install lazygit
 wait
 brew isntall fzf
 wait
+brew isntall jq fd
+wait
 brew install python3
 wait
 python3 -m pip install neovim-remote
