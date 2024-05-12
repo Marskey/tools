@@ -23,6 +23,8 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:
 wait
 curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
 wait
+git clone https://github.com/Morantron/tmux-fingers $HOME/.config/tmux/plugins/tmux-fingers
+wait
 if [[ $OSTYPE == 'darwin'* ]]; then
   echo 'macOS'
   xcode-select –install
