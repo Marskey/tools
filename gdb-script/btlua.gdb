@@ -13,7 +13,7 @@ define btlua
       set $source = $proto.source
       set $filename = (char*)($source) + 32
       set $lineno = ((union GCUnion*)($p.func.value_.gc)).cl.l.p.linedefined
-      printf "0x%x LUA FUNCTION %s : %4d\n", $p, $filename, $lineno
+      printf "0x%x LUA FUNCTION %s:%d\n", $p, $filename, $lineno
 
       set $p = $p.previous
       loop_continue
