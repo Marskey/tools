@@ -49,7 +49,8 @@ git clone https://github.com/Morantron/tmux-fingers $HOME/.config/tmux/plugins/t
 wait
 # tmux done
 
-brew install delta
+# brew install delta
+brew install diffr
 wait
 brew install rlwrap
 wait
