@@ -4,41 +4,39 @@ define btlua
   end
   set $L = (lua_State*)$arg0
   set $p = $L.ci
+  set $stack = $L.stack
   while ( $p != 0 )
     set $o = ($p.func)
     set $tt = ( $o.tt_ & 0x3f )
+    printf "stack idx[%d]\t", $o - $stack
     if ( $tt == 0x06 )
-      set $gcu = ((union GCUnion*)($p.func.value_.gc))
-      set $proto = $gcu.cl.l.p
+      set $lcl = ((LClosure*)($o.value_))
+      set $proto = $lcl.p
       set $source = $proto.source
       set $filename = (char*)($source) + 32
-      set $lineno = ((union GCUnion*)($p.func.value_.gc)).cl.l.p.linedefined
-      printf "0x%x LUA FUNCTION %s:%d\n", $p, $filename, $lineno
+      set $lineno = $proto.linedefined
+      printf "0x%p LUA FUNCTION %s:%d\n", $o, $filename, $lineno
 
       set $p = $p.previous
       loop_continue
     end
 
     if ( $tt == 0x16 )
-      printf "0x%x LIGHT C FUNCTION" , $p
-      output $p.func.value_.f
-      printf " \n "
+      printf "0x%p LIGHT C FUNCTION 0x%p\n" , $o, $o.value_.f
 
       set $p = $p.previous
       loop_continue
     end
 
     if ( $tt == 0x26 )
-      printf "0x%x C FUNCTION" , $p
-      set $gcu = ((union GCUnion*)($p.func.value_.gc))
-      output $gcu.cl.c.f
-      printf "\n"
+      set $ccl = ((CClosure*)($o.value_))
+      printf "0x%p C FUNCTION 0x%p\n" , $p, $ccl.f
 
       set $p = $p.previous
       loop_continue
     end
 
-    printf "0x%x LUA BASE\n" , $p
+    printf "0x%p LUA BASE\n" , $p
     set $p = $p.previous
   end
 end
