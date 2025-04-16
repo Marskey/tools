@@ -1,16 +1,6 @@
 import lldb
 import traceback
 
-# 定义联合体类型（根据 Lua 头文件结构）
-def setup_lua_types(target):
-    # 创建 GCUnion 联合体类型（模拟 Lua 内部结构）
-    gcu_type = target.FindFirstType("GCUnion")
-    if not gcu_type.IsValid():
-        # 如果目标未定义联合体，动态构造类型（需根据你的 Lua 版本调整偏移）
-        gcu_type = target.GetBasicType(lldb.eBasicTypeVoid).GetPointerType()
-        # 注：这里需要根据实际 Lua 结构补充完整类型定义
-    return gcu_type
-
 def btlua_impl(debugger, command, result, internal_dict):
     try:
         target = debugger.GetSelectedTarget()
@@ -35,9 +25,8 @@ def btlua_impl(debugger, command, result, internal_dict):
         if not p.IsValid():
             result.SetError("Failed to get L->ci")
             return
-
-        # 准备 GCUnion 类型
-        gcu_type = setup_lua_types(target)
+        
+        stack = L.GetChildMemberWithName("stack")
 
         while p.GetValueAsUnsigned() != 0:
             # 获取 func 成员
@@ -46,6 +35,7 @@ def btlua_impl(debugger, command, result, internal_dict):
                 result.AppendMessage(f"0x{p.GetValueAsUnsigned():x} [ERROR: Invalid func]")
                 continue
 
+            result.AppendMessage(f"stack idx [{(func.GetValueAsUnsigned() - stack.GetValueAsUnsigned())//16}]")
             # 获取 tt_ 类型标记
             tt = func.GetChildMemberWithName("tt_").GetValueAsUnsigned() & 0x3f
             if tt == 0x06:  # LUA FUNCTION
