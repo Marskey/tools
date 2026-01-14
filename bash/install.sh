@@ -2,7 +2,10 @@
 
 # 检测系统类型
 if [ -f /etc/fedora-release ]; then
-  PKG_MANAGER="sudo dnf"
+  PKG_MANAGER="sudo dnf -y"
+  # 预先获取 sudo 权限，并保持活跃
+  sudo -v
+  while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 elif [[ $OSTYPE == 'darwin'* ]]; then
   PKG_MANAGER="brew"
 else
