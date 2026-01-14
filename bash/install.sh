@@ -1,4 +1,14 @@
 #!/bin/bash
+
+# 检测系统类型
+if [ -f /etc/fedora-release ]; then
+  PKG_MANAGER="dnf"
+elif [[ $OSTYPE == 'darwin'* ]]; then
+  PKG_MANAGER="brew"
+else
+  PKG_MANAGER="brew"
+fi
+
 git init --bare $HOME/.dotfiles
 wait
 dotfiles="/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME"
@@ -27,42 +37,45 @@ curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | 
 wait
 # oh-my-zsh done
 
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-wait
-
-if [[ $OSTYPE == 'darwin'* ]]; then
-  echo 'macOS'
-  xcode-select –install
+# 只在非 Fedora 系统上安装 Homebrew
+if [[ $PKG_MANAGER != "dnf" ]]; then
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   wait
-elif [[ $OSTYPE == 'linux'* ]]; then
-  echo 'linux'
-  (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> /root/.bashrc
+
+  if [[ $OSTYPE == 'darwin'* ]]; then
+    echo 'macOS'
+    xcode-select –install
+    wait
+  elif [[ $OSTYPE == 'linux'* ]]; then
+    echo 'linux'
+    (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> /root/.bashrc
+  fi
 fi
 
-brew install nvim
+$PKG_MANAGER install nvim
 wait
 
 # tmux about
-brew install tmux
+$PKG_MANAGER install tmux
 wait
 git clone https://github.com/Morantron/tmux-fingers $HOME/.config/tmux/plugins/tmux-fingers
 wait
 # tmux done
 
 # brew install delta
-brew install diffr
+$PKG_MANAGER install diffr
 wait
-brew install rlwrap
+$PKG_MANAGER install rlwrap
 wait
-brew install ripgrep
+$PKG_MANAGER install ripgrep
 wait
-brew install lazygit
+$PKG_MANAGER install lazygit
 wait
-brew isntall fzf
+$PKG_MANAGER install fzf
 wait
-brew isntall jq fd
+$PKG_MANAGER install jq fd
 wait
-brew install python3
+$PKG_MANAGER install python3
 wait
 python3 -m pip install neovim-remote
 wait
