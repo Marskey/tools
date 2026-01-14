@@ -3,13 +3,16 @@
 # 检测系统类型
 if [ -f /etc/fedora-release ]; then
   PKG_MANAGER="sudo dnf -y"
+  USE_BREW=false
   # 预先获取 sudo 权限，并保持活跃
   sudo -v
   while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 elif [[ $OSTYPE == 'darwin'* ]]; then
   PKG_MANAGER="brew"
+  USE_BREW=true
 else
   PKG_MANAGER="brew"
+  USE_BREW=true
 fi
 
 dotfiles="/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME"
@@ -44,7 +47,7 @@ command -v zoxide &> /dev/null || curl -sS https://raw.githubusercontent.com/aje
 # oh-my-zsh done
 
 # 只在非 Fedora 系统上安装 Homebrew
-if [[ $PKG_MANAGER != "sudo dnf" ]]; then
+if $USE_BREW; then
   if ! command -v brew &> /dev/null; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
@@ -79,6 +82,7 @@ command -v fzf &> /dev/null || $PKG_MANAGER install fzf
 command -v jq &> /dev/null || $PKG_MANAGER install jq
 command -v fd &> /dev/null || $PKG_MANAGER install fd
 command -v python3 &> /dev/null || $PKG_MANAGER install python3
+$USE_BREW || python3 -m pip --version &> /dev/null || $PKG_MANAGER install python3-pip
 python3 -c "import neovim" 2>/dev/null || python3 -m pip install neovim-remote
 
 [ -L "$HOME/.config/nvim/lua/custom" ] || ln -s $HOME/.config/nvim_nvchad_conf/ $HOME/.config/nvim/lua/custom
