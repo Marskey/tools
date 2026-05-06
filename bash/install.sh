@@ -74,7 +74,7 @@ fi
 # tmux done
 
 # brew install delta
-command -v diffr &> /dev/null || $PKG_MANAGER install diffr
+command -v riff &> /dev/null || $PKG_MANAGER install riff
 command -v rlwrap &> /dev/null || $PKG_MANAGER install rlwrap
 command -v rg &> /dev/null || $PKG_MANAGER install ripgrep
 command -v lazygit &> /dev/null || $PKG_MANAGER install lazygit
