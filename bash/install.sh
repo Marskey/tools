@@ -16,6 +16,7 @@ APP_IDS=(
   jq
   fd
   python
+  neovim_remote
 )
 
 APP_LABELS=(
@@ -31,7 +32,8 @@ APP_LABELS=(
   "fzf"
   "jq"
   "fd"
-  "Python 3 + neovim-remote"
+  "Python 3"
+  "neovim-remote (nvr)"
 )
 
 APP_DESCRIPTIONS=(
@@ -47,12 +49,62 @@ APP_DESCRIPTIONS=(
   "Install the fuzzy finder"
   "Install the JSON processor"
   "Install the fd file finder"
-  "Install Python 3 and Neovim remote support"
+  "Install the Python 3 runtime"
+  "Install remote-wait support for Neovim"
 )
 
+component_is_installed() {
+  local app=$1
+  local zsh_custom=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
+
+  case "$app" in
+    dotfiles)
+      [[ -d $HOME/.dotfiles ]]
+      ;;
+    oh_my_zsh)
+      command -v zsh >/dev/null 2>&1 &&
+        [[ -d $HOME/.oh-my-zsh ]] &&
+        [[ -d $zsh_custom/plugins/zsh-autosuggestions ]] &&
+        [[ -d $zsh_custom/plugins/zsh-syntax-highlighting ]]
+      ;;
+    zoxide)
+      command -v zoxide >/dev/null 2>&1
+      ;;
+    neovim)
+      command -v nvim >/dev/null 2>&1
+      ;;
+    tmux)
+      command -v tmux >/dev/null 2>&1 &&
+        [[ -d $HOME/.config/tmux/plugins/tmux-fingers ]]
+      ;;
+    riff | rlwrap | lazygit | fzf | jq | fd)
+      command -v "$app" >/dev/null 2>&1
+      ;;
+    ripgrep)
+      command -v rg >/dev/null 2>&1
+      ;;
+    python)
+      command -v python3 >/dev/null 2>&1
+      ;;
+    neovim_remote)
+      command -v nvr >/dev/null 2>&1
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 APP_SELECTED=()
+APP_DISABLED=()
 for ((i = 0; i < ${#APP_IDS[@]}; i++)); do
-  APP_SELECTED+=(1)
+  if component_is_installed "${APP_IDS[i]}"; then
+    APP_SELECTED+=(0)
+    APP_DISABLED+=(1)
+  else
+    APP_SELECTED+=(1)
+    APP_DISABLED+=(0)
+  fi
 done
 
 MENU_ACTIVE=false
@@ -79,7 +131,7 @@ trap 'exit 130' INT TERM HUP
 
 draw_app_menu() {
   local cursor=$1
-  local marker pointer color reset
+  local marker pointer color reset description
 
   printf '\033[H\033[2J' >&3
   printf '\033[1;36mSelect components to install\033[0m\n\n' >&3
@@ -89,28 +141,67 @@ draw_app_menu() {
     pointer=' '
     color=''
     reset=''
+    description="${APP_DESCRIPTIONS[i]}"
 
-    if ((APP_SELECTED[i])); then
+    if ((APP_DISABLED[i])); then
+      marker='[-]'
+      color='\033[2;37m'
+      reset='\033[0m'
+      description="$description (already installed)"
+    elif ((APP_SELECTED[i])); then
       marker='[x]'
     fi
     if ((i == cursor)); then
       pointer='>'
-      color='\033[1;32m'
+      if ((!APP_DISABLED[i])); then
+        color='\033[1;32m'
+      fi
       reset='\033[0m'
     fi
 
     printf '%b%s %s %-26s%b %s\n' \
       "$color" "$pointer" "$marker" "${APP_LABELS[i]}" "$reset" \
-      "${APP_DESCRIPTIONS[i]}" >&3
+      "$description" >&3
   done
 
-  printf '\nSpace: toggle  ↑/↓ or j/k: move  a: toggle all  Enter: install  q: quit\n' >&3
+  printf '\nInstalled components are disabled.\n' >&3
+  printf 'Space: toggle  ↑/↓ or j/k: move  a: toggle all  Enter: install  q: quit\n' >&3
+}
+
+first_selectable_index() {
+  for ((i = 0; i < ${#APP_IDS[@]}; i++)); do
+    if ((!APP_DISABLED[i])); then
+      printf '%s' "$i"
+      return
+    fi
+  done
+
+  printf '0'
+}
+
+next_selectable_index() {
+  local cursor=$1
+  local direction=$2
+  local candidate
+
+  for ((i = 0; i < ${#APP_IDS[@]}; i++)); do
+    candidate=$(( (cursor + direction + ${#APP_IDS[@]}) % ${#APP_IDS[@]} ))
+    if ((!APP_DISABLED[candidate])); then
+      printf '%s' "$candidate"
+      return
+    fi
+    cursor=$candidate
+  done
+
+  printf '%s' "$1"
 }
 
 select_apps() {
-  local cursor=0
+  local cursor
   local key sequence
-  local selected_count
+  local selected_count selectable_count
+
+  cursor=$(first_selectable_index)
 
   if [[ ${INSTALL_ALL:-0} == 1 ]]; then
     return
@@ -121,7 +212,7 @@ select_apps() {
   elif [[ -t 0 ]]; then
     exec 3>&0
   else
-    printf 'No interactive terminal detected; installing all components.\n'
+    printf 'No interactive terminal detected; installing all missing components.\n'
     return
   fi
 
@@ -140,23 +231,33 @@ select_apps() {
         sequence=''
         IFS= read -r -n 2 sequence <&3 || true
         case "$sequence" in
-          '[A') cursor=$(( (cursor - 1 + ${#APP_IDS[@]}) % ${#APP_IDS[@]} )) ;;
-          '[B') cursor=$(( (cursor + 1) % ${#APP_IDS[@]} )) ;;
+          '[A') cursor=$(next_selectable_index "$cursor" -1) ;;
+          '[B') cursor=$(next_selectable_index "$cursor" 1) ;;
         esac
         ;;
-      k) cursor=$(( (cursor - 1 + ${#APP_IDS[@]}) % ${#APP_IDS[@]} )) ;;
-      j) cursor=$(( (cursor + 1) % ${#APP_IDS[@]} )) ;;
-      ' ') APP_SELECTED[cursor]=$((1 - APP_SELECTED[cursor])) ;;
+      k) cursor=$(next_selectable_index "$cursor" -1) ;;
+      j) cursor=$(next_selectable_index "$cursor" 1) ;;
+      ' ')
+        if ((!APP_DISABLED[cursor])); then
+          APP_SELECTED[cursor]=$((1 - APP_SELECTED[cursor]))
+        fi
+        ;;
       a)
         selected_count=0
+        selectable_count=0
         for ((i = 0; i < ${#APP_SELECTED[@]}; i++)); do
-          selected_count=$((selected_count + APP_SELECTED[i]))
+          if ((!APP_DISABLED[i])); then
+            selected_count=$((selected_count + APP_SELECTED[i]))
+            selectable_count=$((selectable_count + 1))
+          fi
         done
         for ((i = 0; i < ${#APP_SELECTED[@]}; i++)); do
-          if ((selected_count == ${#APP_SELECTED[@]})); then
-            APP_SELECTED[i]=0
-          else
-            APP_SELECTED[i]=1
+          if ((!APP_DISABLED[i])); then
+            if ((selectable_count > 0 && selected_count == selectable_count)); then
+              APP_SELECTED[i]=0
+            else
+              APP_SELECTED[i]=1
+            fi
           fi
         done
         ;;
@@ -188,7 +289,7 @@ is_selected() {
 has_package_selection() {
   local app
 
-  for app in oh_my_zsh neovim tmux riff rlwrap ripgrep lazygit fzf jq fd python; do
+  for app in oh_my_zsh neovim tmux riff rlwrap ripgrep lazygit fzf jq fd python neovim_remote; do
     if is_selected "$app"; then
       return 0
     fi
@@ -362,14 +463,19 @@ is_selected fd && install_package_if_missing fd fd-find
 
 if is_selected python; then
   install_package_if_missing python3 python python3
-  if ! python3 -c 'import neovim' >/dev/null 2>&1; then
-    if [[ $PACKAGE_MANAGER_NAME == dnf ]] && ! python3 -m pip --version >/dev/null 2>&1; then
+fi
+
+if is_selected neovim_remote; then
+  install_package_if_missing python3 python python3
+  if ! python3 -m pip --version >/dev/null 2>&1; then
+    if [[ $PACKAGE_MANAGER_NAME == dnf ]]; then
       "${PKG_MANAGER[@]}" install python3-pip
+    else
+      printf 'Python was installed without pip; cannot install neovim-remote.\n' >&2
+      exit 1
     fi
-    python3 -m pip install neovim-remote
-  else
-    printf 'neovim-remote already installed, skipping.\n'
   fi
+  python3 -m pip install neovim-remote
 fi
 
 printf '\nDone!\n'
