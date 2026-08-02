@@ -364,6 +364,27 @@ install_package_if_missing() {
   "${PKG_MANAGER[@]}" install "$package"
 }
 
+install_riff() {
+  if [[ $PACKAGE_MANAGER_NAME == dnf ]]; then
+    if ! command -v cargo >/dev/null 2>&1; then
+      if ! "${PKG_MANAGER[@]}" install cargo; then
+        printf 'Warning: Failed to install Cargo; continuing without riff.\n' >&2
+        return 0
+      fi
+    fi
+
+    if ! cargo install riffdiff; then
+      printf 'Warning: Failed to install riff through Cargo; continuing without riff.\n' >&2
+    fi
+    return 0
+  fi
+
+  if ! install_package_if_missing riff riff; then
+    printf 'Warning: Failed to install riff; continuing without it.\n' >&2
+  fi
+  return 0
+}
+
 install_dotfiles() {
   dotfiles() {
     /usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME" "$@"
@@ -453,7 +474,7 @@ if is_selected tmux; then
   fi
 fi
 
-is_selected riff && install_package_if_missing riff riff
+is_selected riff && install_riff
 is_selected rlwrap && install_package_if_missing rlwrap rlwrap
 is_selected ripgrep && install_package_if_missing rg ripgrep
 is_selected lazygit && install_package_if_missing lazygit lazygit
