@@ -385,6 +385,20 @@ install_riff() {
   return 0
 }
 
+install_lazygit() {
+  if [[ $PACKAGE_MANAGER_NAME == dnf ]]; then
+    if ! "${PKG_MANAGER[@]}" copr enable dejan/lazygit; then
+      printf 'Warning: Failed to enable the Lazygit COPR repository; continuing without lazygit.\n' >&2
+      return 0
+    fi
+  fi
+
+  if ! install_package_if_missing lazygit lazygit; then
+    printf 'Warning: Failed to install lazygit; continuing without it.\n' >&2
+  fi
+  return 0
+}
+
 install_dotfiles() {
   dotfiles() {
     /usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME" "$@"
@@ -477,7 +491,7 @@ fi
 is_selected riff && install_riff
 is_selected rlwrap && install_package_if_missing rlwrap rlwrap
 is_selected ripgrep && install_package_if_missing rg ripgrep
-is_selected lazygit && install_package_if_missing lazygit lazygit
+is_selected lazygit && install_lazygit
 is_selected fzf && install_package_if_missing fzf fzf
 is_selected jq && install_package_if_missing jq jq
 is_selected fd && install_package_if_missing fd fd-find
