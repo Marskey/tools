@@ -15,8 +15,6 @@ APP_IDS=(
   fzf
   jq
   fd
-  python
-  neovim_remote
 )
 
 APP_LABELS=(
@@ -32,8 +30,6 @@ APP_LABELS=(
   "fzf"
   "jq"
   "fd"
-  "Python 3"
-  "neovim-remote (nvr)"
 )
 
 APP_DESCRIPTIONS=(
@@ -49,8 +45,6 @@ APP_DESCRIPTIONS=(
   "Install the fuzzy finder"
   "Install the JSON processor"
   "Install the fd file finder"
-  "Install the Python 3 runtime"
-  "Install remote-wait support for Neovim"
 )
 
 component_is_installed() {
@@ -82,12 +76,6 @@ component_is_installed() {
       ;;
     ripgrep)
       command -v rg >/dev/null 2>&1
-      ;;
-    python)
-      command -v python3 >/dev/null 2>&1
-      ;;
-    neovim_remote)
-      command -v nvr >/dev/null 2>&1
       ;;
     *)
       return 1
@@ -289,7 +277,7 @@ is_selected() {
 has_package_selection() {
   local app
 
-  for app in oh_my_zsh neovim tmux riff rlwrap ripgrep lazygit fzf jq fd python neovim_remote; do
+  for app in oh_my_zsh neovim tmux riff rlwrap ripgrep lazygit fzf jq fd; do
     if is_selected "$app"; then
       return 0
     fi
@@ -495,22 +483,5 @@ is_selected lazygit && install_lazygit
 is_selected fzf && install_package_if_missing fzf fzf
 is_selected jq && install_package_if_missing jq jq
 is_selected fd && install_package_if_missing fd fd-find
-
-if is_selected python; then
-  install_package_if_missing python3 python python3
-fi
-
-if is_selected neovim_remote; then
-  install_package_if_missing python3 python python3
-  if ! python3 -m pip --version >/dev/null 2>&1; then
-    if [[ $PACKAGE_MANAGER_NAME == dnf ]]; then
-      "${PKG_MANAGER[@]}" install python3-pip
-    else
-      printf 'Python was installed without pip; cannot install neovim-remote.\n' >&2
-      exit 1
-    fi
-  fi
-  python3 -m pip install neovim-remote
-fi
 
 printf '\nDone!\n'
