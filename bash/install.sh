@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+export PATH="$HOME/.cargo/bin:$PATH"
+
 APP_IDS=(
   dotfiles
   oh_my_zsh
@@ -53,7 +55,8 @@ component_is_installed() {
 
   case "$app" in
     dotfiles)
-      [[ -d $HOME/.dotfiles ]]
+      [[ -d $HOME/.dotfiles ]] &&
+        [[ $(git --git-dir="$HOME/.dotfiles" config --get installer.checkoutComplete 2>/dev/null || true) == true ]]
       ;;
     oh_my_zsh)
       command -v zsh >/dev/null 2>&1 &&
@@ -361,6 +364,13 @@ install_riff() {
       fi
     fi
 
+    persist_cargo_path
+
+    if command -v riff >/dev/null 2>&1; then
+      printf 'riff already installed, skipping.\n'
+      return 0
+    fi
+
     if ! cargo install riffdiff; then
       printf 'Warning: Failed to install riff through Cargo; continuing without riff.\n' >&2
     fi
@@ -371,6 +381,18 @@ install_riff() {
     printf 'Warning: Failed to install riff; continuing without it.\n' >&2
   fi
   return 0
+}
+
+persist_cargo_path() {
+  local zshrc=$HOME/.zshrc
+  local path_entry='export PATH="$HOME/.cargo/bin:$PATH"'
+
+  if [[ -f $zshrc ]] && grep -Fqx "$path_entry" "$zshrc"; then
+    return
+  fi
+
+  printf '\n%s\n' "$path_entry" >>"$zshrc"
+  printf 'Added %s to %s.\n' '$HOME/.cargo/bin' "$zshrc"
 }
 
 install_lazygit() {
@@ -388,29 +410,62 @@ install_lazygit() {
 }
 
 install_dotfiles() {
+  local backup_dir
+  local backed_up=false
+  local path
+
   dotfiles() {
     /usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME" "$@"
   }
 
-  if [[ -d $HOME/.dotfiles ]]; then
-    printf 'Dotfiles already exist, skipping.\n'
-    return
+  if [[ ! -d $HOME/.dotfiles ]]; then
+    git init --bare "$HOME/.dotfiles"
   fi
 
-  git init --bare "$HOME/.dotfiles"
-  dotfiles remote add origin https://github.com/Marskey/dotfiles.git
+  if dotfiles remote get-url origin >/dev/null 2>&1; then
+    dotfiles remote set-url origin https://github.com/Marskey/dotfiles.git
+  else
+    dotfiles remote add origin https://github.com/Marskey/dotfiles.git
+  fi
+
   dotfiles fetch
-  dotfiles checkout -b main --track origin/main
+
+  if ! dotfiles checkout main >/dev/null 2>&1; then
+    backup_dir="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)-$$"
+
+    while IFS= read -r -d '' path; do
+      if [[ -e $HOME/$path || -L $HOME/$path ]]; then
+        mkdir -p "$backup_dir/$(dirname "$path")"
+        mv "$HOME/$path" "$backup_dir/$path"
+        backed_up=true
+      fi
+    done < <(dotfiles ls-tree -rz --name-only origin/main)
+
+    if dotfiles show-ref --verify --quiet refs/heads/main; then
+      dotfiles checkout main
+      dotfiles branch --set-upstream-to=origin/main main
+    else
+      dotfiles checkout -b main --track origin/main
+    fi
+  fi
+
+  if $backed_up; then
+    printf 'Existing dotfiles were backed up to %s.\n' "$backup_dir"
+  fi
+
   dotfiles submodule init
   dotfiles submodule update
   dotfiles config --local status.showUntrackedFiles no
+  dotfiles config --local installer.checkoutComplete true
 }
 
 install_oh_my_zsh() {
   local custom_dir=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
 
   if [[ ! -d $HOME/.oh-my-zsh ]]; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sed 's/env zsh -l//')"
+    RUNZSH=no CHSH=no KEEP_ZSHRC=yes /bin/bash -c \
+      "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
+      -- --unattended
   else
     printf 'Oh My Zsh already installed, skipping core installation.\n'
   fi
@@ -455,6 +510,10 @@ fi
 if is_selected oh_my_zsh; then
   install_package_if_missing zsh zsh
   install_oh_my_zsh
+fi
+
+if [[ -d $HOME/.cargo/bin ]] || command -v cargo >/dev/null 2>&1; then
+  persist_cargo_path
 fi
 
 if is_selected zoxide; then
