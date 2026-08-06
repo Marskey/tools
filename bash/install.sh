@@ -17,6 +17,7 @@ APP_IDS=(
   fzf
   jq
   fd
+  nautilus
 )
 
 APP_LABELS=(
@@ -32,6 +33,7 @@ APP_LABELS=(
   "fzf"
   "jq"
   "fd"
+  "Nautilus"
 )
 
 APP_DESCRIPTIONS=(
@@ -47,6 +49,7 @@ APP_DESCRIPTIONS=(
   "Install the fuzzy finder"
   "Install the JSON processor"
   "Install the fd file finder"
+  "Install the GNOME file manager and file chooser"
 )
 
 component_is_installed() {
@@ -74,7 +77,7 @@ component_is_installed() {
       command -v tmux >/dev/null 2>&1 &&
         [[ -d $HOME/.config/tmux/plugins/tmux-fingers ]]
       ;;
-    riff | rlwrap | lazygit | fzf | jq | fd)
+    riff | rlwrap | lazygit | fzf | jq | fd | nautilus)
       command -v "$app" >/dev/null 2>&1
       ;;
     ripgrep)
@@ -280,7 +283,7 @@ is_selected() {
 has_package_selection() {
   local app
 
-  for app in oh_my_zsh neovim tmux riff rlwrap ripgrep lazygit fzf jq fd; do
+  for app in oh_my_zsh neovim tmux riff rlwrap ripgrep lazygit fzf jq fd nautilus; do
     if is_selected "$app"; then
       return 0
     fi
@@ -542,5 +545,6 @@ is_selected lazygit && install_lazygit
 is_selected fzf && install_package_if_missing fzf fzf
 is_selected jq && install_package_if_missing jq jq
 is_selected fd && install_package_if_missing fd fd-find
+is_selected nautilus && install_package_if_missing nautilus nautilus
 
 printf '\nDone!\n'
